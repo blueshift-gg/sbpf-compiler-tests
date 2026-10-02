@@ -1,0 +1,18 @@
+[package]
+name = "alu32-extension"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[target.'cfg(target_arch = "bpf")'.dependencies]
+solana-compiler-builtins = { git = "https://github.com/blueshift-gg/solana-compiler-builtins", version = "0.1.0" }
+solana-define-syscall = { version = "5", features = ["unstable-static-syscalls"] }
+
+[dev-dependencies]
+harness = { workspace = true }

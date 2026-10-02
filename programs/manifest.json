@@ -142,6 +142,10 @@
           "expected_error": "custom program error: 0xc"
         }
       ]
+    },
+    {
+      "name": "alu32-extension",
+      "benchmarks": []
     }
   ]
 }
