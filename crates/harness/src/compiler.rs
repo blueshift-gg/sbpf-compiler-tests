@@ -7,34 +7,40 @@ use std::{
 use crate::{cargo, command_error};
 
 pub(crate) const CARGO_BUILD_SBPF: &str = "cargo-build-sbpf";
+pub(crate) const CARGO_BUILD_SBF: &str = "cargo-build-sbf";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Compiler {
     CargoBuildSbpf,
+    CargoBuildSbf,
 }
 
 impl Compiler {
     pub(crate) fn subcommand(self) -> &'static str {
         match self {
             Self::CargoBuildSbpf => "build-sbpf",
+            Self::CargoBuildSbf => "build-sbf",
         }
     }
 
     pub(crate) fn build_args(self) -> &'static [&'static str] {
         match self {
             Self::CargoBuildSbpf => &[],
+            Self::CargoBuildSbf => &["--arch", "v3"], // build with arch v3
         }
     }
 
     pub(crate) fn target_dir(self) -> &'static str {
         match self {
             Self::CargoBuildSbpf => "target/bpfel-unknown-none/release",
+            Self::CargoBuildSbf => "target/sbpfv3-solana-solana/release",
         }
     }
 
     pub(crate) fn elf_path(self, root: &Path, target_name: &str) -> PathBuf {
         let file_name = match self {
             Self::CargoBuildSbpf => format!("lib{target_name}.so"),
+            Self::CargoBuildSbf => format!("{target_name}.so"),
         };
         root.join(self.target_dir()).join(file_name)
     }
@@ -42,6 +48,7 @@ impl Compiler {
     pub(crate) fn tool_name(self) -> &'static str {
         match self {
             Self::CargoBuildSbpf => CARGO_BUILD_SBPF,
+            Self::CargoBuildSbf => CARGO_BUILD_SBF,
         }
     }
 
@@ -54,6 +61,7 @@ impl Compiler {
                 versions.extend(run_version_command("rustc", &["--version"])?);
                 Ok(versions)
             }
+            Self::CargoBuildSbf => run_version_command(&cargo, &[self.subcommand(), "--version"]),
         }
     }
 }

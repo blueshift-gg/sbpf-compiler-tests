@@ -21,6 +21,7 @@ The supported compilers are:
 | Compiler | Tool invoked
 |---|---|
 | `cargo-build-sbpf` | `cargo build-sbpf` (nightly Rust + `sbpf-linker`)
+| `cargo-build-sbf` | `cargo build-sbf --arch v3` (Solana platform tools)
 
 
 ## Programs and Manifest

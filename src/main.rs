@@ -9,12 +9,14 @@ include!(concat!(env!("OUT_DIR"), "/programs.rs"));
 #[derive(Clone, Copy, clap::ValueEnum)]
 enum CompilerArg {
     CargoBuildSbpf,
+    CargoBuildSbf,
 }
 
 impl From<CompilerArg> for harness::Compiler {
     fn from(value: CompilerArg) -> Self {
         match value {
             CompilerArg::CargoBuildSbpf => Self::CargoBuildSbpf,
+            CompilerArg::CargoBuildSbf => Self::CargoBuildSbf,
         }
     }
 }

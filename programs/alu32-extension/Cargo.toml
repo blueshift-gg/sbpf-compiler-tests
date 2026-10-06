@@ -12,7 +12,11 @@ workspace = true
 
 [target.'cfg(target_arch = "bpf")'.dependencies]
 solana-compiler-builtins = { git = "https://github.com/blueshift-gg/solana-compiler-builtins", version = "0.1.0" }
-solana-define-syscall = { version = "5", features = ["unstable-static-syscalls"] }
+
+[dependencies]
+solana-define-syscall = { version = "5", features = [
+    "unstable-static-syscalls",
+] }
 
 [dev-dependencies]
 harness = { workspace = true }
