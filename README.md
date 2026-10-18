@@ -70,6 +70,16 @@ Programs without a benchmark module are only built and tested and are not includ
 
 Baselines in `programs/manifest.json` are generated with the release `cargo-build-sbpf` and `sbpf-linker`.
 
+### Note:
+
+Specific programs in the manifest can be run using `--programs` or skipped using `--skip-programs`. 
+Both flags accept a comma-separated list of program names and are mutually exclusive.
+
+```bash
+sbpf-compiler-tests --programs=function-pointer,jmp32
+sbpf-compiler-tests --skip-programs=alloc,jmp32
+```
+
 
 ## How It Works
 

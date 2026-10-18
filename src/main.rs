@@ -29,6 +29,19 @@ struct Arguments {
     /// Build the selected compiler locally from the current root.
     #[arg(long)]
     local: bool,
+
+    /// Comma-separated list of programs to run (defaults to all).
+    #[arg(long, value_delimiter = ',', value_name = "NAMES")]
+    programs: Vec<String>,
+
+    /// Comma-separated list of programs to skip (defaults to none).
+    #[arg(
+        long,
+        value_delimiter = ',',
+        value_name = "NAMES",
+        conflicts_with = "programs"
+    )]
+    skip_programs: Vec<String>,
 }
 
 fn main() -> ExitCode {
@@ -49,6 +62,8 @@ fn main() -> ExitCode {
         arguments.compiler.into(),
         local_binary,
         &registrations(),
+        &clean(&arguments.programs),
+        &clean(&arguments.skip_programs),
     ) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
@@ -56,4 +71,12 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+fn clean(names: &[String]) -> Vec<String> {
+    names
+        .iter()
+        .map(|name| name.trim().to_owned())
+        .filter(|name| !name.is_empty())
+        .collect()
 }

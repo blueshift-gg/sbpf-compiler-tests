@@ -6,6 +6,7 @@ mod report;
 mod runner;
 
 use std::{
+    collections::BTreeSet,
     env,
     error::Error,
     ffi::OsString,
@@ -17,6 +18,7 @@ use std::{
 pub use mollusk_svm::Mollusk;
 pub use mollusk_svm::result::Check;
 pub use solana_account::Account;
+pub use solana_instruction::AccountMeta;
 pub use solana_instruction::Instruction;
 pub use solana_instruction::error::InstructionError;
 pub use solana_pubkey::Pubkey;
@@ -80,14 +82,39 @@ pub fn run(
     compiler: Compiler,
     local_binary: Option<PathBuf>,
     registrations: &[ProgramRegistration],
+    programs: &[String],
+    skip_programs: &[String],
 ) -> Result<(), Box<dyn Error>> {
     logging::init();
     let binary = local_binary
         .as_deref()
         .unwrap_or_else(|| Path::new(compiler.tool_name()));
-    let manifest = manifest::load(&root.join("programs/manifest.json"))?;
+    let mut manifest = manifest::load(&root.join("programs/manifest.json"))?;
     let packages = manifest::load_packages(root)?;
     manifest::validate(&manifest, &packages)?;
+    if !programs.is_empty() || !skip_programs.is_empty() {
+        let skip = programs.is_empty();
+        let list = if skip { skip_programs } else { programs };
+        let available: BTreeSet<_> = manifest
+            .programs
+            .iter()
+            .map(|program| program.name.as_str())
+            .collect();
+
+        // Check if any unknown programs are provided in the list.
+        let unknown: Vec<_> = list
+            .iter()
+            .filter(|name| !available.contains(name.as_str()))
+            .cloned()
+            .collect();
+        if !unknown.is_empty() {
+            return Err(format!("unknown programs provided: `{}`", unknown.join("`, `"),).into());
+        }
+
+        manifest
+            .programs
+            .retain(|program| skip != list.contains(&program.name));
+    }
     let compiler_version = compiler.version(&binary)?;
     let now = jiff::Zoned::now();
     let run_timestamp = format!(

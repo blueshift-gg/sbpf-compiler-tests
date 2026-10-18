@@ -158,6 +158,15 @@
     {
       "name": "winternitz-vault",
       "benchmarks": []
+    },
+    {
+      "name": "counter",
+      "benchmarks": [
+        {
+          "name": "bench-counter-add",
+          "expected_compute_units": 56
+        }
+      ]
     }
   ]
 }

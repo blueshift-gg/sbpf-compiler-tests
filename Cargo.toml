@@ -22,6 +22,7 @@ stack-args-six = { path = "programs/stack-args-six" }
 panic-text-unlikely = { path = "programs/panic-text-unlikely" }
 dfe-recursive = { path = "programs/dfe-recursive" }
 error-handling = { path = "programs/error-handling" }
+counter = { path = "programs/counter" }
 
 [lints]
 workspace = true
