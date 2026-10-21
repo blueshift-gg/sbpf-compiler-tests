@@ -105,6 +105,10 @@
       ]
     },
     {
+      "name": "bpf-trap",
+      "benchmarks": []
+    },
+    {
       "name": "dfe-recursive",
       "benchmarks": [
         {

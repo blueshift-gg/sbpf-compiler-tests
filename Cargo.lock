@@ -1022,6 +1022,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bpf-trap"
+version = "0.1.0"
+dependencies = [
+ "harness",
+ "solana-compiler-builtins",
+]
+
+[[package]]
 name = "brotli"
 version = "9.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
