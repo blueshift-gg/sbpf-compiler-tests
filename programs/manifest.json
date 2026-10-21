@@ -179,6 +179,10 @@
           "expected_compute_units": 56
         }
       ]
+    },
+    {
+      "name": "atomic-load-store",
+      "benchmarks": []
     }
   ]
 }

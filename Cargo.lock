@@ -759,6 +759,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic-load-store"
+version = "0.1.0"
+dependencies = [
+ "harness",
+ "solana-compiler-builtins",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5577,9 +5585,9 @@ dependencies = [
 
 [[package]]
 name = "solana-compiler-builtins"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a05ae1c52e1cf15f910d6206744427639bd99174bd79e2ec377071ebc736fa8"
+checksum = "0526815d70179ffdbeef2d37f20f39be7b71e7853cafda8e4e02f83d6b811b3f"
 
 [[package]]
 name = "solana-compute-budget"

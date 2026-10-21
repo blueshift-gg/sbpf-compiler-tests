@@ -1,0 +1,17 @@
+[package]
+name = "atomic-load-store"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[target.'cfg(target_arch = "bpf")'.dependencies]
+solana-compiler-builtins = { workspace = true }
+
+[dev-dependencies]
+harness = { workspace = true }
