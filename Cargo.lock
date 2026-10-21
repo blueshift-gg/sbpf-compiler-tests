@@ -4971,6 +4971,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "signed-div"
+version = "0.1.0"
+dependencies = [
+ "harness",
+ "solana-compiler-builtins",
+ "solana-define-syscall 5.2.0",
+]
+
+[[package]]
+name = "signed-div-multi"
+version = "0.1.0"
+dependencies = [
+ "harness",
+ "solana-compiler-builtins",
+ "solana-define-syscall 5.2.0",
+]
+
+[[package]]
+name = "signed-div-spill"
+version = "0.1.0"
+dependencies = [
+ "harness",
+ "solana-compiler-builtins",
+ "solana-define-syscall 5.2.0",
+]
+
+[[package]]
 name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -148,6 +148,18 @@
       "benchmarks": []
     },
     {
+      "name": "signed-div",
+      "benchmarks": []
+    },
+    {
+      "name": "signed-div-spill",
+      "benchmarks": []
+    },
+    {
+      "name": "signed-div-multi",
+      "benchmarks": []
+    },
+    {
       "name": "ptoken",
       "benchmarks": []
     },

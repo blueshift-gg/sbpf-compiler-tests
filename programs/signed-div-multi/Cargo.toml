@@ -1,0 +1,22 @@
+[package]
+name = "signed-div-multi"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[target.'cfg(target_arch = "bpf")'.dependencies]
+solana-compiler-builtins = { workspace = true }
+
+[dependencies]
+solana-define-syscall = { version = "5", features = [
+    "unstable-static-syscalls",
+] }
+
+[dev-dependencies]
+harness = { workspace = true }
