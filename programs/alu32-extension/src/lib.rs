@@ -36,6 +36,8 @@ pub const OP_CHECKED_ADD: u8 = 10;
 pub const OP_OVERFLOWING_SUB: u8 = 11;
 pub const OP_HASH: u8 = 12;
 pub const OP_STRUCT_FIELDS: u8 = 13;
+pub const OP_SIGNED_DIV_ADD: u8 = 14;
+pub const OP_ALIGN_DOWN_SUB: u8 = 15;
 
 const TABLE: [u64; 16] = [
     0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
@@ -50,6 +52,31 @@ fn add_u32(a: u32, b: u32) -> u32 {
 #[inline(never)]
 fn mix(x: u64) -> u64 {
     x ^ (x >> 7)
+}
+
+/// The low byte of `a` divided by `b` (0 if `b` is 0), plus one as a `u32`. Not
+/// inlined, and `b` is opaque, so LLVM keeps a 64-bit signed division: the mask
+/// stays a 64-bit `and64` and the quotient goes straight into `add32`.
+#[inline(never)]
+fn signed_div_add(a: i64, b: i64) -> u64 {
+    let quotient = (a & 0xFF)
+        .checked_div(core::hint::black_box(b))
+        .unwrap_or(0);
+    (quotient as u32).wrapping_add(1) as u64
+}
+
+/// The byte sum of `x` plus one, rounded down to a multiple of 8, minus one as
+/// a `u32`, plus the rounded sum itself. Not inlined, and adding `rounded` back
+/// uses all 64 bits of it, so LLVM keeps the mask as `and64 rX, -8` instead of
+/// doing the sum and mask in 32 bits.
+#[inline(never)]
+fn align_down_sub(x: u64) -> u64 {
+    let sum = x
+        .to_le_bytes()
+        .into_iter()
+        .fold(1u64, |acc, byte| acc + byte as u64);
+    let rounded = sum & !7;
+    ((rounded as u32).wrapping_sub(1) as u64).wrapping_add(rounded)
 }
 
 #[repr(C)]
@@ -115,6 +142,12 @@ pub fn compute(op: u8, a: u32, b: u32) -> u64 {
             });
             fields.wide.wrapping_add(fields.word as u64)
         }
+        // A signed division of a value in [0, 255]. A negative `b` still makes
+        // the quotient negative, so range analysis must not treat it as unsigned.
+        OP_SIGNED_DIV_ADD => signed_div_add(a as i64, b as i32 as i64),
+        // A byte sum in [1, 2041] rounded down by `and64 rX, -8`, which can take
+        // it to 0, below that range.
+        OP_ALIGN_DOWN_SUB => align_down_sub(a as u64 | (b as u64) << 32),
         _ => u64::MAX,
     }
 }
@@ -209,6 +242,14 @@ mod tests {
         (OP_STRUCT_FIELDS, 1, 2),
         (OP_STRUCT_FIELDS, 0x7FFF_FFFF, 1),
         (OP_STRUCT_FIELDS, 0xFFFF_FFFF, 0xFFFF_FFFF),
+        (OP_SIGNED_DIV_ADD, 100, 3),
+        (OP_SIGNED_DIV_ADD, 1, 0),
+        (OP_SIGNED_DIV_ADD, 100, 0xFFFF_FFFD),
+        (OP_SIGNED_DIV_ADD, 0xFF, 0xFFFF_FFFF),
+        (OP_ALIGN_DOWN_SUB, 7, 0),
+        (OP_ALIGN_DOWN_SUB, 0, 0),
+        (OP_ALIGN_DOWN_SUB, 3, 3),
+        (OP_ALIGN_DOWN_SUB, 0xFFFF_FFFF, 0xFFFF_FFFF),
     ];
 
     #[test]
