@@ -10,8 +10,5 @@ crate-type = ["cdylib", "lib"]
 [lints]
 workspace = true
 
-[target.'cfg(target_arch = "bpf")'.dependencies]
-solana-compiler-builtins = { workspace = true }
-
 [target.'cfg(not(any(target_arch = "bpf", target_os = "solana")))'.dependencies]
 harness = { workspace = true }

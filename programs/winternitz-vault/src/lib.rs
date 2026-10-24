@@ -1,8 +1,4 @@
 #![cfg_attr(target_os = "solana", no_std)]
-
-#[cfg(target_arch = "bpf")]
-use solana_compiler_builtins as _;
-
 pub mod instructions;
 use instructions::*;
 

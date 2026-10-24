@@ -10,9 +10,6 @@ crate-type = ["cdylib", "lib"]
 [lints]
 workspace = true
 
-[target.'cfg(target_arch = "bpf")'.dependencies]
-solana-compiler-builtins = { workspace = true }
-
 [dependencies]
 pinocchio = { version = "=0.11.2", default-features = false }
 

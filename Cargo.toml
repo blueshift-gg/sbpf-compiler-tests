@@ -41,7 +41,6 @@ solana-account = "4.3.2"
 solana-instruction = "3.4.1"
 solana-pubkey = "4.2.1"
 solana-sdk-ids = "3.1.0"
-solana-compiler-builtins = "0.2.0"
 
 [workspace.lints.rust]
 unexpected_cfgs = "allow"

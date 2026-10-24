@@ -4,8 +4,6 @@ use pinocchio::{
     ProgramResult, account_info::AccountInfo, no_allocator, nostd_panic_handler,
     program_entrypoint, program_error::ProgramError, pubkey::Pubkey,
 };
-#[cfg(target_arch = "bpf")]
-use solana_compiler_builtins as _;
 
 pub mod constants;
 pub mod instructions;

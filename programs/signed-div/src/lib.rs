@@ -12,10 +12,6 @@
 //! a failing test can show what the program actually produced.
 
 #![cfg_attr(any(target_arch = "bpf", target_os = "solana"), no_std)]
-
-#[cfg(target_arch = "bpf")]
-use solana_compiler_builtins as _;
-
 #[cfg(any(target_arch = "bpf", target_os = "solana"))]
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {

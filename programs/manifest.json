@@ -187,6 +187,10 @@
     {
       "name": "atomic-load-store",
       "benchmarks": []
+    },
+    {
+      "name": "compiler-builtins",
+      "benchmarks": []
     }
   ]
 }
