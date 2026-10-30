@@ -13,9 +13,6 @@ pinocchio-system = "0.4"
 pinocchio-token = "0.4"
 pinocchio-associated-token-account = "0.2"
 
-[target.'cfg(target_arch = "bpf")'.dependencies]
-solana-compiler-builtins = { workspace = true }
-
 [lints]
 workspace = true
 

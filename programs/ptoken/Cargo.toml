@@ -20,9 +20,6 @@ pinocchio-log = { version = "0.5.1", default-features = false }
 pinocchio-pubkey = "0.3"
 pinocchio-token-interface = { path = "interface" }
 
-[target.'cfg(target_arch = "bpf")'.dependencies]
-solana-compiler-builtins = { workspace = true }
-
 [dev-dependencies]
 harness = { workspace = true }
 solana-instruction = { workspace = true }

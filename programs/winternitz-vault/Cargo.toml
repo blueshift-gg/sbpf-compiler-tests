@@ -15,9 +15,6 @@ pinocchio-system = "0.4"
 solana-nostd-sha256 = { version = "0.2.0", features = ["static-syscalls"] }
 solana-winternitz = { path = "crates/solana-winternitz" }
 
-[target.'cfg(target_arch = "bpf")'.dependencies]
-solana-compiler-builtins = { workspace = true }
-
 [lints]
 workspace = true
 

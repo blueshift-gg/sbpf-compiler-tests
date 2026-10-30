@@ -304,7 +304,6 @@ version = "0.1.0"
 dependencies = [
  "harness",
  "pinocchio 0.11.2",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -333,7 +332,6 @@ name = "alu32-extension"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
  "solana-define-syscall 5.2.0",
 ]
 
@@ -763,7 +761,6 @@ name = "atomic-load-store"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -1026,7 +1023,6 @@ name = "bpf-trap"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -1330,6 +1326,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "compiler-builtins"
+version = "0.1.0"
+dependencies = [
+ "harness",
+]
+
+[[package]]
 name = "compression-codecs"
 version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1370,7 +1373,6 @@ name = "const-rodata"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -1401,7 +1403,6 @@ version = "0.1.0"
 dependencies = [
  "harness",
  "pinocchio 0.11.2",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -1777,7 +1778,6 @@ name = "dfe-recursive"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -1843,7 +1843,6 @@ name = "dyn-pointer"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -2078,7 +2077,6 @@ name = "error-handling"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -2094,7 +2092,6 @@ dependencies = [
  "pinocchio-system",
  "pinocchio-token",
  "solana-account 4.3.2",
- "solana-compiler-builtins",
  "solana-instruction",
  "solana-program-pack",
  "solana-pubkey 4.2.1",
@@ -2268,7 +2265,6 @@ name = "function-pointer"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -2895,7 +2891,6 @@ name = "input-loads"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -3021,7 +3016,6 @@ name = "jmp32"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -3804,7 +3798,6 @@ name = "panic-text-unlikely"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -3998,7 +3991,6 @@ name = "pointer-table"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -4141,7 +4133,6 @@ dependencies = [
  "pinocchio-pubkey",
  "pinocchio-token-interface",
  "solana-account 4.3.2",
- "solana-compiler-builtins",
  "solana-instruction",
  "solana-keypair",
  "solana-program-error",
@@ -4549,7 +4540,6 @@ name = "rodata-alignment"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -4991,7 +4981,6 @@ name = "signed-div"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
  "solana-define-syscall 5.2.0",
 ]
 
@@ -5000,7 +4989,6 @@ name = "signed-div-multi"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
  "solana-define-syscall 5.2.0",
 ]
 
@@ -5009,7 +4997,6 @@ name = "signed-div-spill"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
  "solana-define-syscall 5.2.0",
 ]
 
@@ -5590,12 +5577,6 @@ dependencies = [
  "serde",
  "serde_derive",
 ]
-
-[[package]]
-name = "solana-compiler-builtins"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0526815d70179ffdbeef2d37f20f39be7b71e7853cafda8e4e02f83d6b811b3f"
 
 [[package]]
 name = "solana-compute-budget"
@@ -8203,7 +8184,6 @@ name = "stack-args-six"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -8223,7 +8203,6 @@ name = "struct-table"
 version = "0.1.0"
 dependencies = [
  "harness",
- "solana-compiler-builtins",
 ]
 
 [[package]]
@@ -9230,7 +9209,6 @@ dependencies = [
  "pinocchio 0.9.3",
  "pinocchio-system",
  "solana-account 4.3.2",
- "solana-compiler-builtins",
  "solana-instruction",
  "solana-nostd-sha256",
  "solana-program-error",
