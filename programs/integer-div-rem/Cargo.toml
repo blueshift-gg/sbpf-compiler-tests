@@ -1,0 +1,17 @@
+[package]
+name = "integer-div-rem"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+solana-define-syscall = { version = "5", features = ["unstable-static-syscalls"] }
+
+[dev-dependencies]
+harness = { workspace = true }
