@@ -33,23 +33,45 @@ mod program {
     // Keep each operation separate, with operands supplied at runtime, so
     // division/remainder cannot disappear through constant folding or be
     // combined into one quotient/remainder computation.
-    macro_rules! operation {
-        ($name:ident, $ty:ty, $method:ident, $result:ty) => {
-            #[inline(never)]
-            fn $name(a: u128, b: u128) -> Option<u128> {
-                (a as $ty).$method(b as $ty).map(|v| v as $result as u128)
-            }
-        };
+    #[inline(never)]
+    fn udiv64(a: u128, b: u128) -> Option<u128> {
+        (a as u64).checked_div(b as u64).map(u128::from)
     }
 
-    operation!(udiv64, u64, checked_div, u128);
-    operation!(umod64, u64, checked_rem, u128);
-    operation!(sdiv64, i64, checked_div, i128);
-    operation!(smod64, i64, checked_rem, i128);
-    operation!(udiv128, u128, checked_div, u128);
-    operation!(umod128, u128, checked_rem, u128);
-    operation!(sdiv128, i128, checked_div, i128);
-    operation!(smod128, i128, checked_rem, i128);
+    #[inline(never)]
+    fn umod64(a: u128, b: u128) -> Option<u128> {
+        (a as u64).checked_rem(b as u64).map(u128::from)
+    }
+
+    #[inline(never)]
+    fn sdiv64(a: u128, b: u128) -> Option<u128> {
+        (a as i64).checked_div(b as i64).map(|v| v as i128 as u128)
+    }
+
+    #[inline(never)]
+    fn smod64(a: u128, b: u128) -> Option<u128> {
+        (a as i64).checked_rem(b as i64).map(|v| v as i128 as u128)
+    }
+
+    #[inline(never)]
+    fn udiv128(a: u128, b: u128) -> Option<u128> {
+        a.checked_div(b)
+    }
+
+    #[inline(never)]
+    fn umod128(a: u128, b: u128) -> Option<u128> {
+        a.checked_rem(b)
+    }
+
+    #[inline(never)]
+    fn sdiv128(a: u128, b: u128) -> Option<u128> {
+        (a as i128).checked_div(b as i128).map(|v| v as u128)
+    }
+
+    #[inline(never)]
+    fn smod128(a: u128, b: u128) -> Option<u128> {
+        (a as i128).checked_rem(b as i128).map(|v| v as u128)
+    }
 
     #[unsafe(no_mangle)]
     extern "C" fn entrypoint(input: *mut u8) -> u64 {
