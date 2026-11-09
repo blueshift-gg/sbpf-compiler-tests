@@ -157,6 +157,10 @@
       "benchmarks": []
     },
     {
+      "name": "integer-div-rem",
+      "benchmarks": []
+    },
+    {
       "name": "signed-div",
       "benchmarks": []
     },
