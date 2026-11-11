@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    BenchmarkResult, BenchmarkRunner, Mollusk, ProgramRegistration, Pubkey, cargo,
+    BenchmarkResult, BenchmarkRunner, Mollusk, ProgramRegistration, Pubkey, RunOutcome, cargo,
     compiler::Compiler,
     invalid_data, logging,
     manifest::{ExpectedBenchmark, ExpectedProgram, Manifest, ProgramPackage},
@@ -42,7 +42,7 @@ pub(crate) fn run_programs(
     packages: &BTreeMap<String, ProgramPackage>,
     run_timestamp: &str,
     binary: &Path,
-) -> Result<(Vec<ProgramReport>, bool), Box<dyn Error>> {
+) -> Result<(Vec<ProgramReport>, RunOutcome), Box<dyn Error>> {
     let mut runners = BTreeMap::new();
     for registration in registrations {
         if runners
@@ -107,25 +107,23 @@ pub(crate) fn run_programs(
     }
 
     let mut reports = Vec::with_capacity(prepared.len());
-    let mut saved_artifacts = false;
+    let mut outcome = RunOutcome::Success;
     for program in &mut prepared {
         let report = execute_program(&mollusk, program)?;
+        let program_outcome = report.outcome();
         // Artifacts are only saved for runs with an issue.
-        let has_issue = report.tests.iter().any(TestReport::is_failed)
-            || report.benchmarks.iter().any(BenchmarkReport::has_issue)
-            || program.load_error.is_some();
-        if has_issue {
+        if program_outcome != RunOutcome::Success {
             save_artifact(
                 compiler,
                 &program.expected.name,
                 &program.elf_path,
                 run_timestamp,
             );
-            saved_artifacts = true;
         }
+        outcome = outcome.merge(program_outcome);
         reports.push(report);
     }
-    if saved_artifacts {
+    if outcome != RunOutcome::Success {
         let mut log_content = String::new();
         for program in &prepared {
             if !program.test_output.is_empty() {
@@ -148,7 +146,7 @@ pub(crate) fn run_programs(
             eprintln!("warning: failed to write log.txt: {error}");
         }
     }
-    Ok((reports, saved_artifacts))
+    Ok((reports, outcome))
 }
 
 fn prepare_program<'a>(
@@ -213,22 +211,21 @@ fn run_tests(root: &Path, programs: &mut [PreparedProgram<'_>]) -> Result<(), Bo
                     program.expected.name
                 )
             })?;
-        program.test_output = format!(
-            "{}\n{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-        let stderr_text = error_text(&String::from_utf8_lossy(&output.stderr));
-        program.tests = parse_test_output(&String::from_utf8_lossy(&output.stdout));
-        if program.tests.is_empty() && !output.status.success() {
+        let stdout_text = String::from_utf8_lossy(&output.stdout);
+        let stderr_text = String::from_utf8_lossy(&output.stderr);
+        program.test_output = format!("{stdout_text}\n{stderr_text}");
+        program.tests = parse_test_output(&stdout_text);
+        // Ensure a failed `cargo test` always has a failed row.
+        if !output.status.success() && !program.tests.iter().any(TestReport::is_failed) {
+            let stderr_text = cargo_error_text(&stderr_text);
             program.tests.push(TestReport {
                 name: "-".to_owned(),
                 outcome: TestOutcome::Failed,
-                error: if stderr_text.is_empty() {
-                    Some("unknown error".to_owned())
+                error: Some(if stderr_text.is_empty() {
+                    format!("cargo test failed with {}", output.status)
                 } else {
-                    Some(stderr_text)
-                },
+                    stderr_text
+                }),
             });
         }
     }
@@ -319,12 +316,17 @@ fn execute_program(
                 benchmarks = failed_benchmark_reports(program.expected, &error.to_string());
             }
         }
+    } else if !program.expected.benchmarks.is_empty() {
+        benchmarks = failed_benchmark_reports(program.expected, "benchmark runner not registered");
     }
 
+    let tests = std::mem::take(&mut program.tests);
+    let load_error = program.load_error.take();
     Ok(ProgramReport {
         name: program.expected.name.clone(),
         benchmarks,
-        tests: std::mem::take(&mut program.tests),
+        tests,
+        load_error,
     })
 }
 
@@ -460,6 +462,14 @@ fn error_text(message: &str) -> String {
         .unwrap_or_else(|| message.to_owned())
 }
 
+fn cargo_error_text(stderr: &str) -> String {
+    stderr
+        .lines()
+        .find(|line| line.trim_start().starts_with("error"))
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| error_text(stderr))
+}
+
 fn panic_message(payload: &Box<dyn std::any::Any + Send>) -> String {
     payload
         .downcast_ref::<String>()
@@ -470,4 +480,126 @@ fn panic_message(payload: &Box<dyn std::any::Any + Send>) -> String {
                 .map(|message| (*message).to_owned())
         })
         .unwrap_or_else(|| "unknown panic".to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn without_runner(expected: &ExpectedProgram) -> PreparedProgram<'_> {
+        PreparedProgram {
+            expected,
+            program_id: Pubkey::new_from_array([0; 32]),
+            runner: None,
+            elf_path: PathBuf::new(),
+            elf_bytes: Vec::new(),
+            load_error: None,
+            tests: Vec::new(),
+            test_output: String::new(),
+        }
+    }
+
+    #[test]
+    fn clean_program_succeeds() {
+        let clean = ProgramReport {
+            benchmarks: vec![BenchmarkReport::default()],
+            ..Default::default()
+        };
+        assert_eq!(clean.outcome(), RunOutcome::Success);
+    }
+
+    #[test]
+    fn benchmark_change_is_an_issue() {
+        let changed = ProgramReport {
+            benchmarks: vec![BenchmarkReport {
+                actual_compute_units: 1,
+                delta_compute_units: 1,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        assert_eq!(changed.outcome(), RunOutcome::Issues);
+    }
+
+    #[test]
+    fn benchmark_error_is_a_failure() {
+        let benchmark_error = ProgramReport {
+            benchmarks: vec![BenchmarkReport {
+                error: Some("boom".to_owned()),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        assert_eq!(benchmark_error.outcome(), RunOutcome::Failure);
+    }
+
+    #[test]
+    fn load_error_is_a_failure() {
+        let expected = ExpectedProgram {
+            name: "program".to_owned(),
+            benchmarks: vec![],
+        };
+        let mut program = without_runner(&expected);
+        program.load_error = Some("load failed".to_owned());
+
+        let report = execute_program(&Mollusk::default(), &mut program).unwrap();
+
+        assert_eq!(report.load_error.as_deref(), Some("load failed"));
+        assert_eq!(report.outcome(), RunOutcome::Failure);
+    }
+
+    #[test]
+    fn failed_test_is_a_failure_even_with_benchmark_change() {
+        let failed_with_change = ProgramReport {
+            tests: vec![TestReport {
+                name: String::new(),
+                outcome: TestOutcome::Failed,
+                error: None,
+            }],
+            benchmarks: vec![BenchmarkReport {
+                actual_compute_units: 1,
+                delta_compute_units: 1,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        assert_eq!(failed_with_change.outcome(), RunOutcome::Failure);
+    }
+
+    #[test]
+    fn prefers_cargo_error_lines() {
+        assert_eq!(
+            cargo_error_text("   Compiling foo\nerror[E0001]: boom\n"),
+            "error[E0001]: boom"
+        );
+        assert_eq!(cargo_error_text("   Compiling foo\n"), "   Compiling foo");
+    }
+
+    #[test]
+    fn parses_test_outcomes() {
+        let outcomes = parse_test_output("test tests::ok ... ok\ntest tests::bad ... FAILED\n");
+        assert_eq!(outcomes.len(), 2);
+        assert_eq!(outcomes[0].outcome, TestOutcome::Passed);
+        assert_eq!(outcomes[1].outcome, TestOutcome::Failed);
+    }
+
+    #[test]
+    fn missing_runner_reports_benchmark_errors() {
+        let expected = ExpectedProgram {
+            name: "program".to_owned(),
+            benchmarks: vec![ExpectedBenchmark {
+                name: "bench".to_owned(),
+                expected_compute_units: 1,
+                expected_error: None,
+            }],
+        };
+        let missing_runner_report =
+            execute_program(&Mollusk::default(), &mut without_runner(&expected)).unwrap();
+
+        assert_eq!(missing_runner_report.benchmarks.len(), 1);
+        assert_eq!(
+            missing_runner_report.benchmarks[0].error.as_deref(),
+            Some("benchmark runner not registered")
+        );
+    }
 }

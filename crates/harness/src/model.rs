@@ -1,9 +1,11 @@
+use crate::RunOutcome;
+
 pub(crate) struct Report {
     pub(crate) compiler: Vec<(String, String)>,
     pub(crate) programs: Vec<ProgramReport>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct BenchmarkReport {
     pub(crate) name: String,
     pub(crate) measured: bool,
@@ -14,8 +16,16 @@ pub(crate) struct BenchmarkReport {
 }
 
 impl BenchmarkReport {
+    pub(crate) fn has_failed(&self) -> bool {
+        self.error.is_some()
+    }
+
+    pub(crate) fn has_changed(&self) -> bool {
+        self.delta_compute_units != 0
+    }
+
     pub(crate) fn has_issue(&self) -> bool {
-        self.error.is_some() || self.delta_compute_units != 0
+        self.has_failed() || self.has_changed()
     }
 }
 
@@ -49,8 +59,26 @@ impl TestReport {
     }
 }
 
+#[derive(Default)]
 pub(crate) struct ProgramReport {
     pub(crate) name: String,
     pub(crate) benchmarks: Vec<BenchmarkReport>,
     pub(crate) tests: Vec<TestReport>,
+    pub(crate) load_error: Option<String>,
+}
+
+impl ProgramReport {
+    /// Classifies the program's tests, benchmarks, and load status.
+    pub(crate) fn outcome(&self) -> RunOutcome {
+        if self.load_error.is_some()
+            || self.tests.iter().any(TestReport::is_failed)
+            || self.benchmarks.iter().any(BenchmarkReport::has_failed)
+        {
+            RunOutcome::Failure
+        } else if self.benchmarks.iter().any(BenchmarkReport::has_changed) {
+            RunOutcome::Issues
+        } else {
+            RunOutcome::Success
+        }
+    }
 }

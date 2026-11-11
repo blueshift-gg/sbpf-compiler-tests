@@ -97,6 +97,8 @@ sbpf-compiler-tests --skip-programs=alloc,jmp32
 
 Runs with an issue, such as a failing test or a changed benchmark, archive their artifacts (ELF file, disassembled output, and execution logs) under `/tmp` so they can be analyzed later.
 
+The command exits non-zero when a program fails to build or load, a test fails, or a benchmark errors. Benchmark deltas are reported and archived but do not affect the exit status on their own; fatal setup, build, or validation errors are printed to stderr.
+
 
 ## How to Add a Program
 
