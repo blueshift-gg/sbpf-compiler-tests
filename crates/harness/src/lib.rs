@@ -29,6 +29,30 @@ pub use compiler::build_local_compiler;
 /// Environment variable which contains the absolute path of the program ELF to load
 pub(crate) const SBPF_PROGRAM_ELF_ENV: &str = "SBPF_PROGRAM_ELF";
 
+/// Outcome of a run.
+///
+/// Benchmark changes are issues but do not fail the run.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RunOutcome {
+    /// No test or benchmark failed, and no benchmark changed.
+    Success,
+    /// A benchmark changed, but nothing failed.
+    Issues,
+    /// A program failed to load, a test failed, or a benchmark errored.
+    Failure,
+}
+
+impl RunOutcome {
+    /// Combines two outcomes, keeping the more severe one.
+    pub(crate) fn merge(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Failure, _) | (_, Self::Failure) => Self::Failure,
+            (Self::Issues, _) | (_, Self::Issues) => Self::Issues,
+            _ => Self::Success,
+        }
+    }
+}
+
 /// Returns the path of the current program's ELF.
 pub fn program_elf() -> String {
     let mut path = match env::var_os(SBPF_PROGRAM_ELF_ENV) {
@@ -84,7 +108,7 @@ pub fn run(
     registrations: &[ProgramRegistration],
     programs: &[String],
     skip_programs: &[String],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<RunOutcome, Box<dyn Error>> {
     logging::init();
     let binary = local_binary
         .as_deref()
@@ -115,7 +139,7 @@ pub fn run(
             .programs
             .retain(|program| skip != list.contains(&program.name));
     }
-    let compiler_version = compiler.version(&binary)?;
+    let compiler_version = compiler.version(binary)?;
     let now = jiff::Zoned::now();
     let run_timestamp = format!(
         "{:04}-{:02}-{:02}_{:02}-{:02}-{:02}-{:03}",
@@ -128,31 +152,25 @@ pub fn run(
         now.millisecond(),
     );
 
-    let (report, saved_artifacts) = {
-        let (programs, saved_artifacts) = runner::run_programs(
-            root,
-            compiler,
-            registrations,
-            &manifest,
-            &packages,
-            &run_timestamp,
-            &binary,
-        )?;
-
-        (
-            model::Report {
-                compiler: compiler_version,
-                programs,
-            },
-            saved_artifacts,
-        )
+    let (programs, outcome) = runner::run_programs(
+        root,
+        compiler,
+        registrations,
+        &manifest,
+        &packages,
+        &run_timestamp,
+        binary,
+    )?;
+    let report = model::Report {
+        compiler: compiler_version,
+        programs,
     };
     let artifacts_dir = Path::new("/tmp")
         .join(compiler.tool_name())
         .join(&run_timestamp);
     let rendered = report::render(&report);
     println!("{rendered}");
-    if saved_artifacts {
+    if outcome != RunOutcome::Success {
         println!(
             "[WARN] Issues detected! Artifacts generated at: {}.",
             artifacts_dir.display()
@@ -163,7 +181,7 @@ pub fn run(
             eprintln!("warning: failed to write report.txt: {error}");
         }
     }
-    Ok(())
+    Ok(outcome)
 }
 
 fn cargo() -> OsString {
@@ -241,4 +259,29 @@ pub(crate) fn validate_name(name: &str) -> Result<(), String> {
         ));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RunOutcome;
+
+    #[test]
+    fn merges_outcomes_by_severity() {
+        use RunOutcome::{Failure, Issues, Success};
+
+        let cases = [
+            (Success, Success, Success),
+            (Success, Issues, Issues),
+            (Success, Failure, Failure),
+            (Issues, Success, Issues),
+            (Issues, Issues, Issues),
+            (Issues, Failure, Failure),
+            (Failure, Success, Failure),
+            (Failure, Issues, Failure),
+            (Failure, Failure, Failure),
+        ];
+        for (left, right, expected) in cases {
+            assert_eq!(left.merge(right), expected, "{left:?} + {right:?}");
+        }
+    }
 }

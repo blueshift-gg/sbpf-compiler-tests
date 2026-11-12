@@ -32,6 +32,15 @@ pub(crate) fn render(report: &Report) -> String {
     out.push_str("\nTests\n");
     out.push_str(&format!("{}\n", test_table(report)));
 
+    if report
+        .programs
+        .iter()
+        .any(|program| program.load_error.is_some())
+    {
+        out.push_str("\nLoad Errors\n");
+        out.push_str(&format!("{}\n", load_error_table(report)));
+    }
+
     out.push_str("\nSummary\n");
     out.push_str(&format!("{}\n", summary_table(report)));
     out.push('\n');
@@ -142,10 +151,46 @@ fn test_table(report: &Report) -> Table {
     table
 }
 
+fn load_error_table(report: &Report) -> Table {
+    let mut table = styled_table();
+    table
+        .set_header(vec!["Program", "Error"])
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    for program in &report.programs {
+        if let Some(error) = &program.load_error {
+            table.add_row(vec![Cell::new(&program.name), Cell::new(error)]);
+        }
+    }
+    table
+}
+
 fn get_delta(value: i64) -> String {
     if value > 0 {
         format!("+{value}")
     } else {
         value.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::ProgramReport;
+
+    #[test]
+    fn renders_load_errors() {
+        let report = Report {
+            compiler: Vec::new(),
+            programs: vec![ProgramReport {
+                name: "program".to_owned(),
+                load_error: Some("bad elf".to_owned()),
+                ..Default::default()
+            }],
+        };
+
+        let rendered = render(&report);
+
+        assert!(rendered.contains("Load Errors"));
+        assert!(rendered.contains("bad elf"));
     }
 }
